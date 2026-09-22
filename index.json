@@ -4,6 +4,21 @@
       "name": "开发环境检查",
       "files": ["SKILL.md"],
       "version": "1"
+    },
+    {
+      "name": "载入工程",
+      "files": ["SKILL.md"],
+      "version": "1"
+    },
+    {
+      "name": "修复问题",
+      "files": ["SKILL.md"],
+      "version": "1"
+    },
+    {
+      "name": "提交 PR",
+      "files": ["SKILL.md"],
+      "version": "1"
     }
   ]
 }
