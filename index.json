@@ -1,0 +1,9 @@
+{
+  "skills": [
+    {
+      "name": "开发环境检查",
+      "files": ["SKILL.md"],
+      "version": "1"
+    }
+  ]
+}
