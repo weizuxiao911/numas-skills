@@ -1,5 +1,5 @@
 ---
-name: fork并clone
+name: Fork克隆
 description: 先让用户选择本地路径作为本地仓库根目录, 经用户授权后执行 fork 和 clone, clone 完成后在项目根生成 AGENTS.md 协作规则 + 初始化 .logs 日志, 并切换工作区到本地仓库
 ---
 
