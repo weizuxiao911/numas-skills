@@ -65,10 +65,49 @@ gh pr create --repo <原仓库> --base <目标分支> --head <user>:<分支> \
 ```
 
 - 创建前**最后一次确认** (question): 确认标题/描述/目标分支无误, 授权创建
+- 命令 stdout 即新建 PR 的 URL, 记下它 (`https://github.com/<owner>/<repo>/pull/<n>`)
 
-### 6. 汇报 + 后续
+### 6. 回传 PR 链接到开源阵地 (仅任务场景)
+
+**触发条件**: 触发消息中同时带齐 `任务ID: <id>` / `实验室编码: <labCode>` / `PR回传接口: <url>` 三项。
+任一缺失 → **跳过本步** (非开源阵地任务场景, 不报错), 直接进第 7 步汇报。
+
+从触发消息中取 (均为 UI 顶部「提交 PR」按钮注入):
+
+- `任务ID`: 数字任务 ID (body 的 `id`)
+- `实验室编码`: body 的 `labCode`
+- `PR回传接口`: 完整回传地址 (形如 `https://lab.cloudlab.top/api/v0.3/open/issues/commit/pr`)
+
+**登录令牌来源**: 宿主机 `~/.numas/cache/session.yaml` 的 `user` 段 `token` 字段
+(容器内 HOME=/home → `/home/.numas/cache/session.yaml`)。只在本地读取, 不外传。
+
+回传请求 (token 走请求头):
+
+```bash
+PR_URL="<第 5 步拿到的 PR URL>"
+TASK_ID="<任务ID>"
+LAB_CODE="<实验室编码>"
+CALLBACK="<PR回传接口>"   # 已含 /open/issues/commit/pr
+SESSION="$HOME/.numas/cache/session.yaml"
+
+TOKEN=$(grep -E '^\s*-\s*token:' "$SESSION" | head -1 | sed -E 's/^\s*-\s*token:\s*//')
+
+curl -sS -X POST "$CALLBACK" \
+  -H 'Content-Type: application/json' \
+  -H "token: $TOKEN" \
+  -d "{\"labCode\":\"$LAB_CODE\",\"id\":$TASK_ID,\"pr\":\"$PR_URL\"}"
+```
+
+- 校验返回 (HTTP 2xx 且业务成功) → 视为回传成功
+- **失败处理 (不阻塞用户)**: 回传失败**不影响 PR 已创建的事实**。用 question 提示用户
+  "PR 已创建但回传开源阵地失败 (原因)" + 提供选项:「重试回传」/「跳过, 手动重试」;
+  选重试则重新执行本步 curl
+- 若 `session.yaml` 不存在或 token 为空 → 提示用户执行「开发准备」技能完成登录授权, 同样不阻塞
+
+### 7. 汇报 + 后续
 
 - 给出 PR 链接
+- 若执行了第 6 步: 说明回传结果 (成功 / 失败待重试)
 - 提醒用户: 等待维护者 review; 后续按 review 意见迭代 (在 fork 上继续提交, PR 自动更新)
 
 ## 注意事项
@@ -76,4 +115,6 @@ gh pr create --repo <原仓库> --base <目标分支> --head <user>:<分支> \
 - **绝不直接向原仓库推送** (无权限且不合规)
 - PR 描述里关联 issue (Closes/Fixes #n), 便于维护者追踪
 - **创建 PR 是用户授权后才执行的动作**, 全程不擅自操作
+- **回传开源阵地是 PR 创建后的独立步骤**: 仅任务场景 (带 id+labCode+回传接口) 执行;
+  失败不阻塞用户 (PR 已创建即有效), 提示后按用户意愿重试
 - 用户对结果负责, AI 只按授权执行 — 提交前充分引导用户认知修复结果
